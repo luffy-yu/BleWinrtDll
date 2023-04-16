@@ -92,7 +92,8 @@ void loop() {
 
       if (gestureCharacteristic.subscribed()) {
         // set a new value , that well be pushed to subscribed BLE devices
-        gestureCharacteristic.writeValue(0xab);
+        Serial.println("writeValue");
+        gestureCharacteristic.writeValue(0x1);
       }
     }
     

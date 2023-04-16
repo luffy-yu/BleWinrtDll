@@ -11,13 +11,16 @@ public class BLEBehaviour : MonoBehaviour
 {
     public TMP_Text TextIsScanning, TextTargetDeviceConnection, TextTargetDeviceData, TextDiscoveredDevices;
     public Button ButtonStartScan;
-    
+
     // Change this to match your device.
     string targetDeviceName = "Arduino Nano 33 BLE";
+
     // string serviceUuid = "{19b10000-e8f2-537e-4f6c-d104768a1214}";
     string serviceUuid = "{0000fff0-0000-1000-8000-00805f9b34fb}";
-    string[] characteristicUuids = {
-        "{0000fff1-0000-1000-8000-00805f9b34fb}",      // CUUID 1
+
+    string[] characteristicUuids =
+    {
+        "{0000fff1-0000-1000-8000-00805f9b34fb}", // CUUID 1
         //    "{00002a01-0000-1000-8000-00805f9b34fb}",       // CUUID 2
         //   "{00002a57-0000-1000-8000-00805f9b34fb}",       // CUUID 3
     };
@@ -25,24 +28,25 @@ public class BLEBehaviour : MonoBehaviour
     BLE ble;
     BLE.BLEScan scan;
     bool isScanning = false, isConnected = false;
-    string deviceId = null;  
+    string deviceId = null;
     IDictionary<string, string> discoveredDevices = new Dictionary<string, string>();
     int devicesCount = 0;
     byte[] valuesToWrite;
 
     // BLE Threads 
     Thread scanningThread, connectionThread, readingThread, writingThread;
-    
+
     void Start()
     {
         ble = new BLE();
-        
+
         TextTargetDeviceConnection.text = targetDeviceName + " not found.";
-        //readingThread = new Thread(ReadBleData);
+        // readingThread = new Thread(ReadBleData);
+        readingThread = null;
     }
 
     void Update()
-    {  
+    {
         if (isScanning)
         {
             if (discoveredDevices.Count > devicesCount)
@@ -50,8 +54,9 @@ public class BLEBehaviour : MonoBehaviour
                 UpdateGuiText("scan");
 
                 devicesCount = discoveredDevices.Count;
-            }                
-        } else
+            }
+        }
+        else
         {
             if (TextIsScanning.text != "Not scanning.")
             {
@@ -66,7 +71,8 @@ public class BLEBehaviour : MonoBehaviour
             // Target device is connected and GUI knows.
             if (ble.isConnected && isConnected)
             {
-                //UpdateGuiText("writeData");
+                // UpdateGuiText("writeData");
+                ReadBleData();
             }
             // Target device is connected, but GUI hasn't updated yet.
             else if (ble.isConnected && !isConnected)
@@ -74,13 +80,14 @@ public class BLEBehaviour : MonoBehaviour
                 UpdateGuiText("connected");
                 isConnected = true;
                 // Device was found, but not connected yet. 
-            } else if (!isConnected)
+            }
+            else if (!isConnected)
             {
                 TextTargetDeviceConnection.text = "Found target device:\n" + targetDeviceName;
-            } 
+            }
         }
     }
-    
+
     public void StartScanHandler()
     {
         devicesCount = 0;
@@ -94,7 +101,7 @@ public class BLEBehaviour : MonoBehaviour
             $"Searching for {targetDeviceName} with \nservice {serviceUuid} and \ncharacteristic {characteristicUuids[0]}";
         TextDiscoveredDevices.text = "";
     }
-    
+
     void ScanBleDevices()
     {
         scan = BLE.ScanDevices();
@@ -125,16 +132,17 @@ public class BLEBehaviour : MonoBehaviour
         scan.Cancel();
         scanningThread = null;
         isScanning = false;
-        
+
         if (deviceId == "-1")
         {
             Debug.Log($"Scan is finished. {targetDeviceName} was not found.");
             return;
         }
+
         Debug.Log($"Found {targetDeviceName} device with id {deviceId}.");
         StartConHandler();
     }
-    
+
     public void StartConHandler()
     {
         connectionThread = new Thread(ConnectBleDevice);
@@ -151,18 +159,22 @@ public class BLEBehaviour : MonoBehaviour
                 ble.Connect(deviceId,
                     serviceUuid,
                     characteristicUuids);
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 Debug.Log("Could not establish connection to device with ID " + deviceId + "\n" + e);
             }
         }
+
         if (ble.isConnected)
             Debug.Log("Connected to: " + targetDeviceName);
     }
-    
+
     void UpdateGuiText(string action)
     {
-        switch(action) {
+        Debug.Log("UpdateGuiText");
+        switch (action)
+        {
             case "scan":
                 TextDiscoveredDevices.text = "";
                 foreach (KeyValuePair<string, string> entry in discoveredDevices)
@@ -170,15 +182,20 @@ public class BLEBehaviour : MonoBehaviour
                     TextDiscoveredDevices.text += "DeviceID: " + entry.Key + "\nDeviceName: " + entry.Value + "\n\n";
                     Debug.Log("Added device: " + entry.Key);
                 }
+
                 break;
             case "connected":
                 TextTargetDeviceConnection.text = "Connected to target device:\n" + targetDeviceName;
                 break;
             case "writeData":
-                // if (!readingThread.IsAlive)
+                // if (readingThread == null)
                 // {
                 //     readingThread = new Thread(ReadBleData);
                 //     readingThread.Start();
+                // }
+                // else
+                // {
+                //     ReadBleData(null);
                 // }
                 // if (remoteAngle != lastRemoteAngle)
                 // {
@@ -188,7 +205,7 @@ public class BLEBehaviour : MonoBehaviour
                 break;
         }
     }
-    
+
     private void OnDestroy()
     {
         CleanUp();
@@ -210,12 +227,13 @@ public class BLEBehaviour : MonoBehaviour
             ble.Close();
             scanningThread.Abort();
             connectionThread.Abort();
-            //readingThread.Abort();
+            readingThread.Abort();
             writingThread.Abort();
-        } catch(NullReferenceException e)
+        }
+        catch (NullReferenceException e)
         {
             Debug.Log("Thread or object never initialized.\n" + e);
-        }        
+        }
     }
 
     public void StartWritingHandler()
@@ -225,36 +243,37 @@ public class BLEBehaviour : MonoBehaviour
             Debug.Log("Cannot write yet");
             return;
         }
-        
-        byte[] bytes = new byte[] {0, 1, 2, 3};
+
+        byte[] bytes = new byte[] { 0, 1, 2, 3 };
         Random random = new Random();
         int start2 = random.Next(0, bytes.Length);
-        valuesToWrite = new byte[] {bytes[start2]};
+        valuesToWrite = new byte[] { bytes[start2] };
         TextTargetDeviceData.text = "Writing some new: " + valuesToWrite[0];
-        
+
         writingThread = new Thread(WriteBleData);
         writingThread.Start();
     }
-    
+
     private void WriteBleData()
     {
         bool ok = BLE.WritePackage(deviceId,
             serviceUuid,
             characteristicUuids[0],
             valuesToWrite);
-        
+
         Debug.Log($"Writing status: {ok}. {BLE.GetError()}");
         writingThread = null;
     }
-    
-    private void ReadBleData(object obj)
+
+    private void ReadBleData()
     {
-        //byte[] packageReceived = BLE.ReadBytes();
-        // Convert little Endian.
-        // In this example we're interested about an angle
-        // value on the first field of our package.
-        // remoteAngle = packageReceived[0];
-        // Debug.Log("Angle: " + remoteAngle);
-        //Thread.Sleep(100);
+        byte[] packageReceived;
+        int size = 0;
+        (packageReceived, size) = BLE.ReadBytes();
+        if (size != 0)
+        {
+            Debug.Log($"ReadBleData {packageReceived} - {packageReceived.Length}");
+            Debug.Log(packageReceived[0]);
+        }
     }
 }
