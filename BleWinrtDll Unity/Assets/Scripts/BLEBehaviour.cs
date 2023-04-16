@@ -13,10 +13,11 @@ public class BLEBehaviour : MonoBehaviour
     public Button ButtonStartScan;
     
     // Change this to match your device.
-    string targetDeviceName = "Arduino";
-    string serviceUuid = "{19b10000-e8f2-537e-4f6c-d104768a1214}";
+    string targetDeviceName = "Arduino Nano 33 BLE";
+    // string serviceUuid = "{19b10000-e8f2-537e-4f6c-d104768a1214}";
+    string serviceUuid = "{0000fff0-0000-1000-8000-00805f9b34fb}";
     string[] characteristicUuids = {
-        "{19b10001-e8f2-537e-4f6c-d104768a1214}",      // CUUID 1
+        "{0000fff1-0000-1000-8000-00805f9b34fb}",      // CUUID 1
         //    "{00002a01-0000-1000-8000-00805f9b34fb}",       // CUUID 2
         //   "{00002a57-0000-1000-8000-00805f9b34fb}",       // CUUID 3
     };
